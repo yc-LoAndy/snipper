@@ -4,6 +4,7 @@ class Env {
         "ENV",
         "PORT",
         "DATABASE_URL",
+        "COOKIE_SECRET"
     ] as const
     private variables: { [K in (typeof this.REQUIRED_KEYS)[number]]: string | undefined } = {}
 
