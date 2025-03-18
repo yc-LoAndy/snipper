@@ -21,6 +21,7 @@ router.post(
     middleware.validator({
         requestSchemas: {
             body: z.object({
+                userName: z.string().optional(),
                 userEmail: z.string(),
                 password: z.string()
             })
@@ -29,7 +30,11 @@ router.post(
     }),
     async (req, res, next) => {
         try {
-            const { userEmail, password } = req.body as { userEmail: string, password: string }
+            const { userName, userEmail, password } = req.body as {
+                userName?: string,
+                userEmail: string,
+                password: string
+            }
             const existingUser = await prisma.user.findUnique({ where: { email: userEmail } })
             if (existingUser)
                 throw new ConflictError(`${userEmail} already exists.`)
@@ -40,6 +45,7 @@ router.post(
             const hashedPassword = sha256(password)
             await prisma.user.create({
                 data: {
+                    name: userName ?? null,
                     email: userEmail,
                     password: hashedPassword,
                     tokens: {
