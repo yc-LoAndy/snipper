@@ -42,9 +42,11 @@ model token {
 }
 
 model snippet {
-  id         Int             @id @default(autoincrement())
+  id         Int
   language   SupportLanguage
   content    String?
   owner      user            @relation(fields: [ownerEmail], references: [email])
   ownerEmail String
+
+  @@unique([ownerEmail, id])
 }

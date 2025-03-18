@@ -5,8 +5,8 @@ import * as g from "@/globalVars"
 import prisma from "@/utils/prisma"
 import { sha256 } from "@/utils/util"
 import middleware from "@/middlewares"
-import { BadRequestError, ConflictError, UnauthorizedError } from "@/models/errors"
 import { SupportLanguage } from "@prisma/client"
+import { BadRequestError, ConflictError, UnauthorizedError } from "@/models/errors"
 
 const router = Router()
 
@@ -64,7 +64,7 @@ router.post(
 /**
  * GET /user
  *
- * Get basic info of the user
+ * Get all basic info of the user
  */
 router.get(
     "/user",
