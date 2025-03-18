@@ -3,6 +3,7 @@ import { fromError } from "zod-validation-error"
 import { NextFunction, Request, Response } from "express"
 
 import Logger from "@/utils/logger"
+import { BadRequestError } from "@/models/errors"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Schemas = {
@@ -19,13 +20,8 @@ export default ({ requestSchemas, responseSchema }: { requestSchemas?: Schemas, 
             if (requestSchemas?.query) requestSchemas.query.parse(req.query)
         }
         catch (error) {
-            const validationError = fromError(error)
-            Logger.error(validationError)
-            res.status(400).send({
-                error: "Request Validation Error",
-                error_description: validationError
-            })
-            return
+            const validationError = fromError(error).toString().replaceAll("\"", "'")
+            throw new BadRequestError(validationError)
         }
 
         res.validateAndSend = (body: any) => {
