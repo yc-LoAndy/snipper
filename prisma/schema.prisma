@@ -28,7 +28,7 @@ enum SupportLanguage {
   PYTHON
   JAVASCRIPT
   TYPESCRIPT
-  MYSQL
+  SQL
   PLAIN_TEXT
 }
 

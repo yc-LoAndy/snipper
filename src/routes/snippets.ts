@@ -18,11 +18,20 @@ const router = Router()
 router.get(
     "/snippet/supported-language",
     middleware.validator({
-        responseSchema: z.array(z.nativeEnum(SupportLanguage))
+        responseSchema: z.array(z.object({
+            language: z.nativeEnum(SupportLanguage),
+            imagePath: z.string()
+        }))
     }),
     async (req, res, next) => {
         try {
-            res.status(200).validateAndSend(g.SUPPORTED_LANGUAGES)
+            const response = g.SUPPORTED_LANGUAGES.map(
+                (l) => ({
+                    language: l,
+                    imagePath: `./src/assets/${l.toLowerCase()}.png`
+                })
+            )
+            res.status(200).validateAndSend(response)
         }
         catch (err) {
             next(err)

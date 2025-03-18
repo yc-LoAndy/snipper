@@ -3,7 +3,8 @@ import { ErrorRequestHandler } from "express"
 import Logger from "@/utils/logger"
 import { CustomError, InternalServerError } from "@/models/errors"
 
-const errorMiddleware: ErrorRequestHandler = (err, req, res) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const errorMiddleware: ErrorRequestHandler = (err, req, res, _next) => {
     Logger.error({
         req: { id: req.requestId },
         error: err instanceof Error ? err.stack : err
