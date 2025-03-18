@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "npx eslint --fix src/",
     "start:dev": "dotenv -e .env.dev -- tsx watch src/app.ts",
+    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev",
     "migrate-dev:name": "dotenv -e .env.dev -- npx prisma migrate dev --name"
   },
   "repository": {
