@@ -112,7 +112,7 @@ router.put(
                 }
             })
             if (!snippetRecord)
-                throw new BadRequestError("snippet not found")
+                return next(new BadRequestError("snippet not found"))
             const content = req.body.newSnippet as string
             await prisma.snippet.update({
                 where: {

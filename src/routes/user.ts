@@ -37,10 +37,10 @@ router.post(
             }
             const existingUser = await prisma.user.findUnique({ where: { email: userEmail } })
             if (existingUser)
-                throw new ConflictError(`${userEmail} already exists.`)
+                return next(new ConflictError(`${userEmail} already exists.`))
 
             if (password.length < g.MINIMUM_PASSWORD_LEN)
-                throw new BadRequestError("Password length must be at least 8 characters")
+                return next(new BadRequestError("Password length must be at least 8 characters"))
 
             const hashedPassword = sha256(password)
             await prisma.user.create({
@@ -135,7 +135,7 @@ router.patch(
             const userAccount = await prisma.user.findUnique({ where: { email: req.userEmail } })
             if (newPassword) {
                 if (!oldPassword || sha256(oldPassword) !== userAccount!.password)
-                    throw new UnauthorizedError()
+                    return next(new UnauthorizedError())
             }
             if (newUserName) {
                 await prisma.user.update({

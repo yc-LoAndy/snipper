@@ -50,9 +50,9 @@ router.post(
                 where: { email: userEmail }
             })
             if (!userAccount)
-                throw new UnauthorizedError()
+                return next(new UnauthorizedError())
             if (userAccount.password !== sha256(userPassword))
-                throw new UnauthorizedError()
+                return next(new UnauthorizedError())
             const accessToken = await tokenManager.setAccessToken(userEmail)
             const { refreshToken, refreshTokenExp } = await tokenManager.setRefreshToken(userEmail)
             res.cookie(g.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
