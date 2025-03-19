@@ -97,4 +97,40 @@ router.post(
     }
 )
 
+/**
+ * GET /token
+ *
+ * Refresh the user's access token and rotate the refresh token
+ */
+router.get(
+    "/token",
+    middleware.validator({
+        responseSchema: z.object({
+            accessToken: z.string()
+        })
+    }),
+    async (req, res, next) => {
+        try {
+            const oldRefreshToken = req.signedCookies[g.REFRESH_TOKEN_COOKIE_NAME] as string | undefined
+            if (oldRefreshToken === undefined) {
+                return next(new UnauthorizedError())
+            }
+            const rotateResult = await tokenManager.refreshAccount(oldRefreshToken)
+            if (!rotateResult) {
+                return next(new UnauthorizedError())
+            }
+            res.cookie(g.REFRESH_TOKEN_COOKIE_NAME, rotateResult.refreshToken, {
+                ...g.COOKIE_CONFIG, expires: rotateResult.refreshTokenExp
+            })
+
+            res.status(200).validateAndSend({ accessToken: rotateResult.accessToken })
+            next()
+        }
+        catch (err) {
+            next(err)
+        }
+
+    }
+)
+
 export default router
