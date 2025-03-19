@@ -79,11 +79,12 @@ router.get(
         responseSchema: z.object({
             userEmail: z.string(),
             userName: z.string().nullable(),
-            snippets: z.array(
-                z.object({
-                    laguage: z.nativeEnum(SupportLanguage),
+            snippets: z.record(
+                z.nativeEnum(SupportLanguage),
+                z.array(z.object({
+                    id: z.number(),
                     content: z.string()
-                }).nullable()
+                }))
             )
         })
     }),
@@ -92,13 +93,20 @@ router.get(
             const snippetsResult = await prisma.snippet.findMany({
                 where: { ownerEmail: req.userEmail }
             })
-            const snippets = snippetsResult.map(
-                (s) => ({ language: s.language, content: s.content })
+            const snippets: Map<SupportLanguage, { id: number, content: string }[]> = new Map()
+
+            for (const l of Object.values(SupportLanguage))
+                snippets.set(l, [])
+
+            snippetsResult.forEach(
+                (s) => snippets.get(s.language)!.push({ id: s.id, content: s.content ?? "" })
             )
+            const responseSnippets = Object.fromEntries(snippets)
+
             res.status(200).validateAndSend({
                 userEmail: req.userEmail,
                 userName: req.userName,
-                snippets
+                snippets: responseSnippets
             })
         }
         catch (err) {

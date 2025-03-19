@@ -30,21 +30,6 @@ router.post(
     async (req, res, next) => {
         try {
             // If user is already logged-in, extends his refresh token exp
-            const authHeader = req.headers.authorization
-            if (authHeader) {
-                const accessToken = authHeader.substring(7)
-                const account = await tokenManager.verifyAccessToken(accessToken)
-                if (account) {
-                    const newAccessToken = await tokenManager.setAccessToken(account.userEmail)
-                    const newRefreshTokenObj = await tokenManager.setRefreshToken(account.userEmail)
-                    res.cookie(g.REFRESH_TOKEN_COOKIE_NAME, newRefreshTokenObj.refreshToken, {
-                        ...g.COOKIE_CONFIG, expires: newRefreshTokenObj.refreshTokenExp
-                    })
-                    res.status(200).validateAndSend({ token: newAccessToken })
-                    return next()
-                }
-            }
-
             const { userEmail, userPassword } = req.body as { userEmail: string, userPassword: string }
             const userAccount = await prisma.user.findUnique({
                 where: { email: userEmail }
@@ -102,7 +87,7 @@ router.post(
  *
  * Refresh the user's access token and rotate the refresh token
  */
-router.get(
+router.post(
     "/token",
     middleware.validator({
         responseSchema: z.object({

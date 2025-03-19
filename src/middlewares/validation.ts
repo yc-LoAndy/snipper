@@ -30,13 +30,13 @@ export default ({ requestSchemas, responseSchema }: { requestSchemas?: Schemas, 
                     body = responseSchema.parse(body)
                 }
                 catch (error) {
-                    const validationError = fromError(error)
+                    const validationError = fromError(error).toString()
                     Logger.error(validationError)
                     res.status(500).json({
                         error: "Response Validation Error",
                         error_description: validationError
                     })
-                    next(error)
+                    return
                 }
             }
             return res.send(body)
