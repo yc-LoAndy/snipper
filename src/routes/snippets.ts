@@ -5,7 +5,7 @@ import * as g from "@/globalVars"
 import prisma from "@/utils/prisma"
 import middleware from "@/middlewares"
 import { SupportLanguage } from "@prisma/client"
-import { BadRequestError } from "@/models/errors"
+import { BadRequestError, ConflictError } from "@/models/errors"
 
 
 const router = Router()
@@ -51,13 +51,27 @@ router.post(
         requestSchemas: {
             body: z.object({
                 language: z.nativeEnum(SupportLanguage),
-                content: z.string()
+                fileName: z.string(),
+                folderName: z.string(),
+                content: z.string(),
             })
         },
         responseSchema: z.object({ snippetId: z.number() })
     }),
     async (req, res, next) => {
         try {
+            const {
+                language,
+                fileName,
+                folderName,
+                content
+            } = req.body as { language: SupportLanguage, fileName: string, folderName: string, content: string }
+            const dupSnippet = await prisma.snippet.findUnique({
+                where: { language, fileName_folderName: { fileName, folderName }}
+            })
+            if (dupSnippet)
+                return next(new ConflictError(`${folderName}/${fileName} already exists. Give a different name.`))
+
             const prevSnippet = await prisma.snippet.findFirst({
                 where: { ownerEmail: req.userEmail },
                 orderBy: { id: "desc" },
@@ -65,12 +79,11 @@ router.post(
             })
             const snippetId = prevSnippet === null ? 0 : prevSnippet.id + 1
 
-            const { language, content } = req.body as { language: SupportLanguage, content: string }
             await prisma.snippet.create({
                 data: {
                     id: snippetId,
                     ownerEmail: req.userEmail,
-                    language, content
+                    language, content, fileName, folderName
                 }
             })
             res.status(201).validateAndSend({ snippetId })

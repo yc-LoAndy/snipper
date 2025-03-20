@@ -47,6 +47,9 @@ model snippet {
   content    String?
   owner      user            @relation(fields: [ownerEmail], references: [email])
   ownerEmail String
+  fileName   String
+  folderName String          @default("MySnippet")
 
   @@unique([ownerEmail, id])
+  @@unique([fileName, folderName])
 }
