@@ -81,10 +81,16 @@ router.get(
             userName: z.string().nullable(),
             snippets: z.record(
                 z.nativeEnum(SupportLanguage),
-                z.array(z.object({
-                    id: z.number(),
-                    content: z.string()
-                }))
+                z.record(
+                    z.string(),  // folder name
+                    z.array(
+                        z.object({
+                            id: z.number(),
+                            fileNmae: z.string(),
+                            content: z.string()
+                        })
+                    )
+                )
             )
         })
     }),
@@ -93,15 +99,25 @@ router.get(
             const snippetsResult = await prisma.snippet.findMany({
                 where: { ownerEmail: req.userEmail }
             })
-            const snippets: Map<SupportLanguage, { id: number, content: string }[]> = new Map()
-
-            for (const l of Object.values(SupportLanguage))
-                snippets.set(l, [])
-
-            snippetsResult.forEach(
-                (s) => snippets.get(s.language)!.push({ id: s.id, content: s.content ?? "" })
-            )
-            const responseSnippets = Object.fromEntries(snippets)
+            const responseSnippets = {} as Record<SupportLanguage, Record<string, {
+                id: number,
+                fileName: string,
+                content: string
+            }[]>>
+            for (const l of g.SUPPORTED_LANGUAGES)
+                responseSnippets[l] = {}
+            for (const record of snippetsResult) {
+                const tree = responseSnippets[record.language]
+                const snippetInstance = {
+                    id: record.id,
+                    fileName: record.fileName,
+                    content: record.content ?? ""
+                }
+                if (record.folderName in tree)
+                    tree[record.folderName].push(snippetInstance)
+                else
+                    tree[record.folderName] = [snippetInstance]
+            }
 
             res.status(200).validateAndSend({
                 userEmail: req.userEmail,
