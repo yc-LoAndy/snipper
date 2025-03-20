@@ -66,11 +66,12 @@ router.post(
                 folderName,
                 content
             } = req.body as { language: SupportLanguage, fileName: string, folderName: string, content: string }
+            const ext = g.LANGUAGE_EXTENSIONS.get(language)
             const dupSnippet = await prisma.snippet.findUnique({
                 where: { language, fileName_folderName: { fileName, folderName }}
             })
             if (dupSnippet)
-                return next(new ConflictError(`${folderName}/${fileName} already exists. Give a different name.`))
+                return next(new ConflictError(`${folderName}/${fileName}.${ext} already exists. Give a different name.`))
 
             const prevSnippet = await prisma.snippet.findFirst({
                 where: { ownerEmail: req.userEmail },
@@ -108,7 +109,9 @@ router.put(
                 snippetId: z.number()
             }),
             body: z.object({
-                newSnippet: z.string()
+                newSnippet: z.string().optional(),
+                newFolder: z.string().optional(),
+                newFileName: z.string().optional()
             })
         },
         responseSchema: z.object({ success: z.boolean() })
@@ -126,16 +129,26 @@ router.put(
             })
             if (!snippetRecord)
                 return next(new BadRequestError("snippet not found"))
-            const content = req.body.newSnippet as string
-            await prisma.snippet.update({
-                where: {
-                    ownerEmail_id: {
-                        ownerEmail: req.userEmail,
-                        id: snippetId
-                    }
-                },
-                data: { content }
-            })
+            const { newSnippet, newFolder, newFileName } = req.body as {
+                newSnippet?: string, newFolder?: string, newFileName?: string
+            }
+            const data = Object.fromEntries(
+                Object.entries({ newSnippet, newFolder, newFileName }).filter(
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    ([ _, v ]) => v !== undefined
+                )
+            )
+            if (Object.keys(data).length !== 0) {
+                await prisma.snippet.update({
+                    where: {
+                        ownerEmail_id: {
+                            ownerEmail: req.userEmail,
+                            id: snippetId
+                        }
+                    },
+                    data
+                })
+            }
             res.status(200).validateAndSend({ success: true })
         }
         catch (err) {

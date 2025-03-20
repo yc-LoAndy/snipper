@@ -19,12 +19,12 @@ export const MINIMUM_PASSWORD_LEN = 8
 
 export const SUPPORTED_LANGUAGES = Object.values(SupportLanguage)
 export const LANGUAGE_EXTENSIONS: Map<SupportLanguage, string> = new Map([
-    ["C", ".c"],
-    ["PYTHON", ".py"],
-    ["JAVASCRIPT", ".js"],
-    ["TYPESCRIPT", ".ts"],
-    ["SQL", ".sql"],
-    ["PLAIN_TEXT", ".txt"]
+    ["C", "c"],
+    ["PYTHON", "py"],
+    ["JAVASCRIPT", "js"],
+    ["TYPESCRIPT", "ts"],
+    ["SQL", "sql"],
+    ["PLAIN_TEXT", "txt"]
 ])
 SUPPORTED_LANGUAGES.forEach(
     (l) => {
