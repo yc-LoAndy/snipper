@@ -52,7 +52,7 @@ model snippet {
   content  String @default("")
   fileName String
   folderId Int
-  folder   folder @relation(fields: [folderId], references: [id])
+  folder   folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
 
   @@unique([folderId, fileName]) // unique file name in each folder
 }
