@@ -167,25 +167,19 @@ router.delete(
         requestSchemas: {
             params: z.object({ folderId: z.string() }),
         },
-        responseSchema: z.object({ count: z.number() })
+        responseSchema: z.object({ success: z.boolean() })
     }),
     async (req, res, next) => {
         try {
             const folderId: number = Number(req.params['folderId'])
             const existingFolder = await prisma.folder.findUnique({
-                where: { id: folderId }, include: { snippets: true }
+                where: { id: folderId }, include: { snippets: true, children: true }
             })
             if (!existingFolder)
                 return next(new ConflictError("Folder does not exist"))
+            await prisma.folder.delete({ where: { id: folderId } })
 
-            const { count: snippetsDeleteCount } = await prisma.snippet.deleteMany({
-                where: { id: { in: existingFolder.snippets.map((s) => s.id) } }
-            })
-            await prisma.folder.delete({
-                where: { id: folderId }
-            })
-
-            res.status(200).validateAndSend({ count: snippetsDeleteCount })
+            res.status(200).validateAndSend({ success: true })
         }
         catch (err) {
             next(err)

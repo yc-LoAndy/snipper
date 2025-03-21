@@ -30,12 +30,11 @@ model folder {
   owner      user      @relation(fields: [ownerEmail], references: [email])
   isTopLevel Boolean
   parrentId  Int?
-  parrent    folder?   @relation("FolderParent", fields: [parrentId], references: [id])
+  parrent    folder?   @relation("FolderParent", fields: [parrentId], references: [id], onDelete: Cascade)
   children   folder[]  @relation("FolderParent")
   snippets   snippet[]
 
   @@unique([parrentId, name]) // unique folder names in the same folder
-  @@unique([ownerEmail, isTopLevel, name]) // unique folder name for each user's top level folders
 }
 
 model token {
