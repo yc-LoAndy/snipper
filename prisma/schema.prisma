@@ -15,21 +15,27 @@ datasource db {
 }
 
 model user {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
   password String
   name     String?
-  snippets snippet[]
   tokens   token?
+  folders  folder[]
 }
 
-enum SupportLanguage {
-  C
-  PYTHON
-  JAVASCRIPT
-  TYPESCRIPT
-  SQL
-  PLAIN_TEXT
+model folder {
+  id         Int       @id @default(autoincrement())
+  name       String
+  ownerEmail String
+  owner      user      @relation(fields: [ownerEmail], references: [email])
+  isTopLevel Boolean
+  parrentId  Int?
+  parrent    folder?   @relation("FolderParent", fields: [parrentId], references: [id])
+  children   folder[]  @relation("FolderParent")
+  snippets   snippet[]
+
+  @@unique([parrentId, name]) // unique folder names in the same folder
+  @@unique([ownerEmail, isTopLevel, name]) // unique folder name for each user's top level folders
 }
 
 model token {
@@ -42,14 +48,11 @@ model token {
 }
 
 model snippet {
-  id         Int
-  language   SupportLanguage
-  content    String?
-  owner      user            @relation(fields: [ownerEmail], references: [email])
-  ownerEmail String
-  fileName   String
-  folderName String          @default("MySnippet")
+  id       Int    @id @default(autoincrement())
+  content  String @default("")
+  fileName String
+  folderId Int
+  folder   folder @relation(fields: [folderId], references: [id])
 
-  @@unique([ownerEmail, id])
-  @@unique([fileName, folderName])
+  @@unique([folderId, fileName]) // unique file name in each folder
 }

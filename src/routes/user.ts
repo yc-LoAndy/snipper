@@ -1,12 +1,13 @@
 import { z } from "zod"
+import _ from "lodash"
 import { Router } from "express"
 
 import * as g from "@/globalVars"
 import prisma from "@/utils/prisma"
 import { sha256 } from "@/utils/util"
-import middleware from "@/middlewares"
-import { SupportLanguage } from "@prisma/client"
+import middlewares from "@/middlewares"
 import { BadRequestError, ConflictError, UnauthorizedError } from "@/models/errors"
+import { FolderStructure, FolderStructureSchema } from "@/models/folderStructure"
 
 const router = Router()
 
@@ -18,7 +19,7 @@ const router = Router()
  */
 router.post(
     "/user",
-    middleware.validator({
+    middlewares.validator({
         requestSchemas: {
             body: z.object({
                 userName: z.string().optional(),
@@ -74,56 +75,75 @@ router.post(
  */
 router.get(
     "/user",
-    middleware.isAuthenticated,
-    middleware.validator({
+    middlewares.isAuthenticated,
+    middlewares.validator({
         responseSchema: z.object({
             userEmail: z.string(),
             userName: z.string().nullable(),
-            snippets: z.record(
-                z.nativeEnum(SupportLanguage),
-                z.record(
-                    z.string(),  // folder name
-                    z.array(
-                        z.object({
-                            id: z.number(),
-                            fileNmae: z.string(),
-                            content: z.string()
-                        })
-                    )
-                )
-            )
+            folderStructure: FolderStructureSchema.array()
         })
     }),
     async (req, res, next) => {
         try {
-            const snippetsResult = await prisma.snippet.findMany({
-                where: { ownerEmail: req.userEmail }
+            const rootFolders = await prisma.folder.findMany({
+                where: {
+                    ownerEmail: req.userEmail,
+                    isTopLevel: true
+                },
+                include: {
+                    snippets: { orderBy: { fileName: "asc" } }
+                },
+                orderBy: { name: "asc" }
             })
-            const responseSnippets = {} as Record<SupportLanguage, Record<string, {
-                id: number,
-                fileName: string,
-                content: string
-            }[]>>
-            for (const l of g.SUPPORTED_LANGUAGES)
-                responseSnippets[l] = {}
-            for (const record of snippetsResult) {
-                const tree = responseSnippets[record.language]
-                const snippetInstance = {
-                    id: record.id,
-                    fileName: record.fileName,
-                    content: record.content ?? ""
+
+            const responseFolderStructure = [] as FolderStructure[]
+            responseFolderStructure.push(...(rootFolders.map<FolderStructure>(
+                (f) => ({
+                    id: f.id,
+                    name: f.name,
+                    snippets: _.map(f.snippets, (s) => _.omit(s, "folderId")),
+                    children: []
+                })
+            )))
+
+            async function recursivePushStructure(f: FolderStructure) {
+                const folder = await prisma.folder.findUnique({
+                    where: { id: f.id },
+                    select: {
+                        children: {
+                            include: { snippets: { orderBy: { fileName: "asc" } } }
+                        },
+                    }
+                })
+                if (!folder)
+                    throw new Error()
+                const children = folder.children
+                children.forEach(
+                    (c) => {
+                        f.children.push({
+                            id: c.id,
+                            name: c.name,
+                            snippets: _.map(c.snippets, (s) => _.omit(s, "folderId")),
+                            children: []
+                        })
+                    }
+                )
+
+                for (const ch of f.children) {
+                    await recursivePushStructure(ch)
                 }
-                if (record.folderName in tree)
-                    tree[record.folderName].push(snippetInstance)
-                else
-                    tree[record.folderName] = [snippetInstance]
+            }
+
+            for (const root of responseFolderStructure) {
+                await recursivePushStructure(root)
             }
 
             res.status(200).validateAndSend({
                 userEmail: req.userEmail,
                 userName: req.userName,
-                snippets: responseSnippets
+                folderStructure: responseFolderStructure
             })
+
         }
         catch (err) {
             next(err)
@@ -138,8 +158,8 @@ router.get(
  */
 router.patch(
     "/user",
-    middleware.isAuthenticated,
-    middleware.validator({
+    middlewares.isAuthenticated,
+    middlewares.validator({
         requestSchemas: {
             body: z.object({
                 oldPassword: z.string().optional(),

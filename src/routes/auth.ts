@@ -3,7 +3,7 @@ import { Router } from "express"
 
 import * as g from "@/globalVars"
 import { sha256 } from "@/utils/util"
-import middleware from "@/middlewares"
+import middlewares from "@/middlewares"
 import prisma from "@/utils/prisma"
 import tokenManager from "@/utils/token"
 import { UnauthorizedError } from "@/models/errors"
@@ -18,7 +18,7 @@ const router = Router()
 
 router.post(
     "/login",
-    middleware.validator({
+    middlewares.validator({
         requestSchemas: {
             body: z.object({
                 userEmail: z.string().email(),
@@ -58,7 +58,7 @@ router.post(
  */
 router.post(
     "/logout",
-    middleware.validator({
+    middlewares.validator({
         responseSchema: z.object({ success: z.boolean() })
     }),
     async (req, res, next) => {
@@ -89,7 +89,7 @@ router.post(
  */
 router.post(
     "/token",
-    middleware.validator({
+    middlewares.validator({
         responseSchema: z.object({
             accessToken: z.string()
         })

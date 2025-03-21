@@ -4,7 +4,7 @@ import { Router } from "express"
 import authRoute from "./auth"
 import userRoute from "./user"
 import snippetRoute from "./snippets"
-import middleware from "@/middlewares"
+import middlewares from "@/middlewares"
 
 const r = Router()
 r.use(authRoute)
@@ -13,7 +13,7 @@ r.use(snippetRoute)
 
 r.get(
     "/healthcheck",
-    middleware.validator({
+    middlewares.validator({
         responseSchema: z.object({ OK: z.boolean() })
     }),
     (_, res) => {
