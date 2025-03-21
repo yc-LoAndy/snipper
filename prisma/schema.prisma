@@ -39,7 +39,7 @@ model folder {
 }
 
 model token {
-  user            user     @relation(fields: [userEmail], references: [email])
+  user            user     @relation(fields: [userEmail], references: [email], onDelete: Cascade)
   userEmail       String   @unique
   accessToken     String   @unique
   accessTokenExp  DateTime
