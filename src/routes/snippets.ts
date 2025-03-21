@@ -124,4 +124,73 @@ router.put(
     }
 )
 
+/**
+ * DELETE /snippet/:snippetId
+ *
+ * Delete a snippet.
+ */
+router.delete(
+    "/snippet/:snippetId",
+    middlewares.isAuthenticated,
+    middlewares.validator({
+        requestSchemas: {
+            params: z.object({ snippetId: z.string() }),
+        },
+        responseSchema: z.object({ success: z.boolean() })
+    }),
+    async (req, res, next) => {
+        try {
+            const snippetId: number = Number(req.params['snippetId'])
+            const existingSnippet = await prisma.snippet.findUnique({
+                where: { id: snippetId }
+            })
+            if (!existingSnippet)
+                return next(new ConflictError("Snippet does not exist"))
+            await prisma.snippet.delete({ where: { id: snippetId } })
+            res.status(200).validateAndSend({ success: true })
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+)
+
+/**
+ * DELETE /folder/:folderId
+ *
+ * Delete a folde and all its contents.
+ */
+router.delete(
+    "/folder/:folderId",
+    middlewares.isAuthenticated,
+    middlewares.validator({
+        requestSchemas: {
+            params: z.object({ folderId: z.string() }),
+        },
+        responseSchema: z.object({ count: z.number() })
+    }),
+    async (req, res, next) => {
+        try {
+            const folderId: number = Number(req.params['folderId'])
+            const existingFolder = await prisma.folder.findUnique({
+                where: { id: folderId }, include: { snippets: true }
+            })
+            if (!existingFolder)
+                return next(new ConflictError("Folder does not exist"))
+
+            const { count: snippetsDeleteCount } = await prisma.snippet.deleteMany({
+                where: { id: { in: existingFolder.snippets.map((s) => s.id) } }
+            })
+            await prisma.folder.delete({
+                where: { id: folderId }
+            })
+
+            res.status(200).validateAndSend({ count: snippetsDeleteCount })
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+)
+
 export default router
