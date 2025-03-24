@@ -18,7 +18,7 @@ export function sha256(s: string) {
     return createHash("sha256").update(s).digest("hex")
 }
 
-export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<number> {
+export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<number | null> {
     /* Assume pathArr doesn't include the file itself */
     /* Return the folder id of the last dir in pathArr */
     const rootDirsDB = await prisma.user.findUnique({
@@ -26,6 +26,8 @@ export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<nu
     })
     if (!rootDirsDB)
         throw new Error(`${userEmail} not found`)
+    if (pathArr.length === 0)
+        return null
     const rootDirs = rootDirsDB.folders
 
     let rootDir = rootDirs.find(f => f.name === pathArr[0])

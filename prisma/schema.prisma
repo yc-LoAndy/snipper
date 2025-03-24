@@ -47,11 +47,11 @@ model token {
 }
 
 model snippet {
-  id       Int    @id @default(autoincrement())
-  content  String @default("")
+  id       Int     @id @default(autoincrement())
+  content  String  @db.MediumText // maximum 16MB
   fileName String
-  folderId Int
-  folder   folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folderId Int?
+  folder   folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
 
   @@unique([folderId, fileName]) // unique file name in each folder
 }
