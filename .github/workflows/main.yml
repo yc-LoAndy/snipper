@@ -2,6 +2,8 @@ name: Deploy to Railway
 
 on:
   push:
+    paths:
+      - prisma/migrations/**
     branches: [main]
 
 jobs:
@@ -12,5 +14,12 @@ jobs:
       SVC_ID: 4720fcd0-a596-4355-a74c-789dbf32aeff
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: pnpm install
+      - name: Apply all pending migrations to the database
+        run: pnpm exec prisma migrate deploy
       - run: railway up --service=${{ env.SVC_ID }}
