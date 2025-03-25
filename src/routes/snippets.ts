@@ -6,7 +6,7 @@ import * as g from "@/globalVars"
 import prisma from "@/utils/prisma"
 import middlewares from "@/middlewares"
 import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from "@/models/errors"
-import { trimAny, mkAllDir } from "@/utils/util"
+import { trimAny, mkAllDir, checkUserSpaceUsage } from "@/utils/util"
 import Logger from "@/utils/logger"
 
 
@@ -32,9 +32,13 @@ router.post(
     async (req, res, next) => {
         try {
             const { filePath, content } = req.body as { filePath: string, content: string }
+            if (filePath.length > g.MAXIMUM_PATH_LENGTH)
+                return next(new BadRequestError("Path length limit exceeded"))
+            if (!checkUserSpaceUsage(req.userEmail, content.length))
+                return next(new BadRequestError("User storage limit exceeded"))
 
-            let parentFolderId: number | null = null;
             const pathArray = trimAny(convertPath(filePath, "posix"), [".", "/"]).split("/")
+            let parentFolderId: number | null = null;
             if (pathArray.length <= 1) {
                 const account = await prisma.user.findUnique({ where: { email: req.userEmail }, select: { folders: true } })
                 if (account!.folders.length !== 0)
@@ -104,13 +108,18 @@ router.put(
     }),
     async (req, res, next) => {
         try {
+            const { newContent, newPath } = req.body as { newContent?: string, newPath?: string }
+            if (newPath && newPath.length > g.MAXIMUM_PATH_LENGTH)
+                return next(new BadRequestError("Path length limit exceeded"))
+            if (newContent && !checkUserSpaceUsage(req.userEmail, newContent.length))
+                return next(new BadRequestError("User storage limit exceeded"))
+
             const snippetId: number = Number(req.params["snippetId"])
             const existingSnippet = await prisma.snippet.findUnique({
                 where: { id: snippetId }
             })
             if (!existingSnippet)
                 return next(new NotFoundError("snippet not found"))
-            const { newContent, newPath } = req.body as { newContent?: string, newPath?: string }
 
             if (newPath) {
                 const pathArray = trimAny(convertPath(newPath, "posix"), [".", "/"]).split("/")
@@ -192,8 +201,11 @@ router.put(
     }),
     async (req, res, next) => {
         try {
-            const folderId: number = Number(req.params['folderId'])
             const newFolderPath = req.body.newFolderPath as string
+            if (newFolderPath.length > g.MAXIMUM_PATH_LENGTH)
+                return next(new BadRequestError("Path length limit exceeded"))
+
+            const folderId: number = Number(req.params['folderId'])
             const folder = await prisma.folder.findUnique({
                 where: { id: folderId }
             })

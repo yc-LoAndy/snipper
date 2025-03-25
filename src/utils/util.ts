@@ -67,3 +67,28 @@ export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<nu
 
     return rootDir.id
 }
+
+export async function checkUserSpaceUsage(userEmail: string, newSnippetLength: number): Promise<boolean> {
+    const user = await prisma.user.findUnique({ where: { email: userEmail }, select: { folders: true } })
+    if (!user)
+        throw new NotFoundError(`${userEmail} not found`)
+
+    let snippetUsage = 0
+    let folderUsage = 0
+
+    async function recursiveGetStorageUsage(f: folder) {
+        folderUsage++
+        const completeFolder = await prisma.folder.findUnique(
+            { where: { id: f.id }, select: { children: true, snippets: true } }
+        )
+        completeFolder!.snippets.forEach((s) => snippetUsage += s.content.length)
+        for (const ch of completeFolder!.children) {
+            recursiveGetStorageUsage(ch)
+        }
+    }
+
+    for (const f of user.folders)
+        await recursiveGetStorageUsage(f)
+
+    return !(snippetUsage + newSnippetLength > g.MAXIMUM_SNIPPET_USAGE || folderUsage > g.MAXIMUM_FOLDER_NUM)
+}

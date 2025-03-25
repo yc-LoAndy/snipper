@@ -16,3 +16,6 @@ export const ACCESS_TOKEN_EXP = 10 * 60 * 1000          // 10 minutes
 
 export const MINIMUM_PASSWORD_LEN = 8
 export const MAXIMUM_PATH_DEPTH = 4
+export const MAXIMUM_SNIPPET_USAGE = 2 * 1024 * 1024 // 2 MiB
+export const MAXIMUM_FOLDER_NUM = 30
+export const MAXIMUM_PATH_LENGTH = 50
