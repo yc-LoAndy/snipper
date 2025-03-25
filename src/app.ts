@@ -1,3 +1,4 @@
+import cors from "cors"
 import helmet from "helmet"
 import express from "express"
 import "express-async-errors"
@@ -9,6 +10,11 @@ import Logger from "@/utils/logger"
 import middleware from "@/middlewares"
 
 const app = express()
+
+app.use(cors({
+    origin: env.get("FRONTEND_URL"),
+    credentials: true
+}))
 
 app.use(helmet())
 app.use(express.json())
