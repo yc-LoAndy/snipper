@@ -4,10 +4,10 @@
   "description": "Handy app to bookmark common code snippets",
   "main": "app.ts",
   "scripts": {
-    "lint": "npx eslint --fix src/",
+    "lint": "pnpm exec eslint --fix src/",
     "start:dev": "dotenv -e .env.dev -- tsx watch src/app.ts",
-    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev",
-    "migrate-dev:name": "dotenv -e .env.dev -- npx prisma migrate dev --name"
+    "migrate:dev": "dotenv -e .env.dev -- pnpm exec prisma migrate dev",
+    "migrate-dev:name": "dotenv -e .env.dev -- pnpm exec prisma migrate dev --name"
   },
   "repository": {
     "type": "git",
@@ -36,9 +36,10 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.13",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "@yarnpkg/pnpify": "^4.1.4",
     "eslint": "^9.22.0",
     "globals": "^16.0.0",
     "lodash": "^4.17.21",
@@ -46,5 +47,6 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.26.1"
-  }
+  },
+  "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af"
 }
