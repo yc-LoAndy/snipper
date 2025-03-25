@@ -8,6 +8,7 @@
     "build": "npm install -g corepack@0.24.1 && corepack enable && pnpm config set ignore-scripts false && pnpm i --frozen-lockfile",
     "start": "tsx src/app.ts",
     "start:dev": "dotenv -e .env.dev -- tsx watch src/app.ts",
+    "migrate": "pnpm exec prisma migrate deploy",
     "migrate:dev": "dotenv -e .env.dev -- pnpm exec prisma migrate dev",
     "migrate-dev:name": "dotenv -e .env.dev -- pnpm exec prisma migrate dev --name"
   },
