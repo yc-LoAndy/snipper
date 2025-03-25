@@ -2,6 +2,7 @@
     "compilerOptions": {
         "target": "ES6",
         "module": "CommonJS",
+        "moduleResolution": "node",
         // Treat files as modules even if it doesn't use import/export
         "moduleDetection": "force",
         // Use correct ESM import behavior
