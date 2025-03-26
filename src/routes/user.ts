@@ -40,8 +40,10 @@ router.post(
             if (existingUser)
                 return next(new ConflictError(`${userEmail} already exists.`))
 
+            if (userName && userName.length > g.MAXIMUM_USERNAME_LEN)
+                return next(new BadRequestError(`User name cannot be longer than ${g.MAXIMUM_USERNAME_LEN} characters`))
             if (password.length < g.MINIMUM_PASSWORD_LEN)
-                return next(new BadRequestError("Password length must be at least 8 characters"))
+                return next(new BadRequestError(`Password length must be at least ${g.MINIMUM_PASSWORD_LEN} characters`))
 
             const hashedPassword = sha256(password)
             await prisma.user.create({
