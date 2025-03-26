@@ -15,12 +15,12 @@ datasource db {
 }
 
 model user {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
-  password String
-  name     String?
-  tokens   token?
-  folders  folder[]
+  id      Int      @id @default(autoincrement())
+  email   String   @unique
+  name    String?
+  tokens  token?
+  avatar  String
+  folders folder[]
 }
 
 model folder {

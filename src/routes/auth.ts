@@ -2,54 +2,13 @@ import { z } from "zod"
 import { Router } from "express"
 
 import * as g from "@/globalVars"
-import { sha256 } from "@/utils/util"
 import middlewares from "@/middlewares"
 import prisma from "@/utils/prisma"
 import tokenManager from "@/utils/token"
 import { UnauthorizedError } from "@/models/errors"
+import getGoogleUserData from "@/utils/oauth"
 
 const router = Router()
-
-/**
- * POST /login
- *
- * Authenticate a user.
- */
-
-router.post(
-    "/login",
-    middlewares.validator({
-        requestSchemas: {
-            body: z.object({
-                userEmail: z.string().email(),
-                userPassword: z.string(),
-            })
-        },
-        responseSchema: z.object({ accessToken: z.string() })
-    }),
-    async (req, res, next) => {
-        try {
-            // If user is already logged-in, extends his refresh token exp
-            const { userEmail, userPassword } = req.body as { userEmail: string, userPassword: string }
-            const userAccount = await prisma.user.findUnique({
-                where: { email: userEmail }
-            })
-            if (!userAccount)
-                return next(new UnauthorizedError())
-            if (userAccount.password !== sha256(userPassword))
-                return next(new UnauthorizedError())
-            const accessToken = await tokenManager.setAccessToken(userEmail)
-            const { refreshToken, refreshTokenExp } = await tokenManager.setRefreshToken(userEmail)
-            res.cookie(g.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-                ...g.COOKIE_CONFIG, expires: refreshTokenExp
-            })
-            res.status(200).validateAndSend({ accessToken })
-        }
-        catch (err) {
-            next(err)
-        }
-    }
-)
 
 /**
  * POST /logout
@@ -115,6 +74,51 @@ router.post(
             next(err)
         }
 
+    }
+)
+
+router.post(
+    "/google/callback",
+    middlewares.validator({
+        requestSchemas: {
+            body: z.object({ accessToken: z.string() })
+        },
+        responseSchema: z.object({ accessToken: z.string() })
+    }),
+    async (req, res, next) => {
+        try {
+            const userData = await getGoogleUserData(req.body.accessToken as string);
+            const existingAccount = await prisma.user.findUnique({ where: { email: userData.email } })
+            if (!existingAccount) {
+                await prisma.user.create({
+                    data: {
+                        email: userData.email,
+                        name: userData.name ?? "",
+                        avatar: userData.avatar
+                    }
+                })
+                await prisma.token.create({
+                    data: {
+                        userEmail: userData.email,
+                        accessToken: "",
+                        accessTokenExp: new Date(),
+                        refreshToken: "",
+                        refreshTokenExp: new Date()
+                    }
+                })
+            }
+
+            const accessToken = await tokenManager.setAccessToken(userData.email)
+            const { refreshToken, refreshTokenExp } = await tokenManager.setRefreshToken(userData.email)
+            res.cookie(g.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+                ...g.COOKIE_CONFIG, expires: refreshTokenExp
+            })
+
+            res.status(200).validateAndSend({ accessToken })
+        }
+        catch (err) {
+            next(err)
+        }
     }
 )
 

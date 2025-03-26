@@ -1,4 +1,3 @@
-import { createHash } from "crypto"
 import prisma from "./prisma"
 import { folder } from "@prisma/client"
 import * as g from "@/globalVars"
@@ -14,10 +13,6 @@ export function trimAny(str: string, chars: string[]) {
         --end;
 
     return (start > 0 || end < str.length) ? str.substring(start, end) : str;
-}
-
-export function sha256(s: string) {
-    return createHash("sha256").update(s).digest("hex")
 }
 
 export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<number | null> {
