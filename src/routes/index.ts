@@ -1,12 +1,12 @@
-import { z } from "zod"
 import { Router } from "express"
 
 import authRoute from "./auth"
 import userRoute from "./user"
 import snippetRoute from "./snippets"
-import middlewares from "@/middlewares"
+import miscRouter from "./misc"
 
 const r = Router()
+
 // utility route to mimic internet delay
 /*
 import env from "@/utils/env"
@@ -17,10 +17,13 @@ r.all('*', async (_, __, next) => {
     next()
 })
 */
+
 r.use(authRoute)
 r.use(userRoute)
 r.use(snippetRoute)
+r.use(miscRouter)
 
+/*
 r.get(
     "/healthcheck",
     middlewares.validator({
@@ -30,5 +33,6 @@ r.get(
         res.status(200).validateAndSend({ OK: true })
     }
 )
+*/
 
 export default r
