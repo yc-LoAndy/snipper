@@ -19,13 +19,16 @@ router.get(
     middlewares.isAuthenticated,
     middlewares.validator({
         responseSchema: z.object({
-            userEmail: z.string(),
             userName: z.string().nullable(),
+            userEmail: z.string(),
+            userAvatarUrl: z.string(),
             folderStructure: FolderStructureSchema.array()
         })
     }),
     async (req, res, next) => {
         try {
+            const user = await prisma.user.findUnique({ where: { email: req.userEmail } })
+
             const rootFolders = await prisma.folder.findMany({
                 where: {
                     ownerEmail: req.userEmail,
@@ -80,8 +83,9 @@ router.get(
             }
 
             res.status(200).validateAndSend({
-                userEmail: req.userEmail,
                 userName: req.userName,
+                userEmail: req.userEmail,
+                userAvatarUrl: user?.avatar ?? "",
                 folderStructure: responseFolderStructure
             })
 
