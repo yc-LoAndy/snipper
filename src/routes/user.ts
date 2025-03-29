@@ -3,7 +3,7 @@ import { Router } from "express"
 
 import prisma from "@/utils/prisma"
 import middlewares from "@/middlewares"
-import { FolderStructure, FolderStructureSchema } from "@/models/folderStructure"
+import { FolderStructureSchema } from "@/models/folderStructure"
 
 const router = Router()
 
@@ -31,68 +31,42 @@ router.get(
                 select: { avatar: true }
             })
 
-            const rootFolders = await prisma.folder.findMany({
-                where: {
-                    ownerEmail: req.userEmail,
-                    isTopLevel: true
-                },
+            const folderStructure = await prisma.folder.findMany({
+                where: { ownerEmail: req.userEmail, isTopLevel: true },
                 select: {
-                    id: true, name: true,
-                    snippets: { omit: { folderId: true } }
+                    id: true,
+                    name: true,
+                    snippets: { omit: { folderId: true } },
+                    children: {
+                        select: {
+                            id: true,
+                            name: true,
+                            snippets: { omit: { folderId: true } },
+                            children: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    snippets: { omit: { folderId: true } },
+                                    children: {  // Fetching up to 3 levels deep
+                                        select: {
+                                            id: true,
+                                            name: true,
+                                            snippets: { omit: { folderId: true } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: { name: "asc" }
-            })
-
-            const responseFolderStructure = [] as FolderStructure[]
-            responseFolderStructure.push(...(rootFolders.map<FolderStructure>(
-                (f) => ({
-                    id: f.id,
-                    name: f.name,
-                    snippets: f.snippets,
-                    children: []
-                })
-            )))
-
-            async function recursivePushStructure(f: FolderStructure) {
-                const folder = await prisma.folder.findUnique({
-                    where: { id: f.id },
-                    select: {
-                        children: {
-                            select: {
-                                id: true, name: true,
-                                snippets: { orderBy: { fileName: "asc" } }
-                            }
-                        },
-                    }
-                })
-                if (!folder)
-                    throw new Error()
-                const children = folder.children
-                children.forEach(
-                    (c) => {
-                        f.children.push({
-                            id: c.id,
-                            name: c.name,
-                            snippets: c.snippets,
-                            children: []
-                        })
-                    }
-                )
-
-                for (const ch of f.children) {
-                    await recursivePushStructure(ch)
-                }
-            }
-
-            for (const root of responseFolderStructure) {
-                await recursivePushStructure(root)
-            }
+            });
 
             res.status(200).validateAndSend({
                 userName: req.userName,
                 userEmail: req.userEmail,
                 userAvatarUrl: user?.avatar ?? "",
-                folderStructure: responseFolderStructure
+                folderStructure: folderStructure
             })
 
         }
