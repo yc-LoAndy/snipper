@@ -1,5 +1,4 @@
 import { z } from "zod"
-import _ from "lodash"
 import { Router } from "express"
 
 import prisma from "@/utils/prisma"
@@ -27,15 +26,19 @@ router.get(
     }),
     async (req, res, next) => {
         try {
-            const user = await prisma.user.findUnique({ where: { email: req.userEmail } })
+            const user = await prisma.user.findUnique({
+                where: { email: req.userEmail },
+                select: { avatar: true }
+            })
 
             const rootFolders = await prisma.folder.findMany({
                 where: {
                     ownerEmail: req.userEmail,
                     isTopLevel: true
                 },
-                include: {
-                    snippets: { orderBy: { fileName: "asc" } }
+                select: {
+                    id: true, name: true,
+                    snippets: { omit: { folderId: true } }
                 },
                 orderBy: { name: "asc" }
             })
@@ -45,7 +48,7 @@ router.get(
                 (f) => ({
                     id: f.id,
                     name: f.name,
-                    snippets: _.map(f.snippets, (s) => _.omit(s, "folderId")),
+                    snippets: f.snippets,
                     children: []
                 })
             )))
@@ -55,7 +58,10 @@ router.get(
                     where: { id: f.id },
                     select: {
                         children: {
-                            include: { snippets: { orderBy: { fileName: "asc" } } }
+                            select: {
+                                id: true, name: true,
+                                snippets: { orderBy: { fileName: "asc" } }
+                            }
                         },
                     }
                 })
@@ -67,7 +73,7 @@ router.get(
                         f.children.push({
                             id: c.id,
                             name: c.name,
-                            snippets: _.map(c.snippets, (s) => _.omit(s, "folderId")),
+                            snippets: c.snippets,
                             children: []
                         })
                     }
