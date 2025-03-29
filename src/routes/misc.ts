@@ -17,7 +17,7 @@ router.get(
     async (_, res, next) => {
         const samplesArr: { name: string, code: string }[] = []
         try {
-            const samplesPath = path.join(__dirname, "../assets/codeSamples");
+            const samplesPath = path.join(__dirname, "../assets/codeSamples")
             const files = await fs.readdir(samplesPath)
 
             for (const file of files) {

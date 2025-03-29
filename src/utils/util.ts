@@ -4,15 +4,15 @@ import * as g from "@/globalVars"
 import { NotFoundError } from "@/models/errors"
 
 export function trimAny(str: string, chars: string[]) {
-    let start = 0, end = str.length;
+    let start = 0, end = str.length
 
     while (start < end && chars.indexOf(str[start]) >= 0)
-        ++start;
+        ++start
 
     while (end > start && chars.indexOf(str[end - 1]) >= 0)
-        --end;
+        --end
 
-    return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+    return (start > 0 || end < str.length) ? str.substring(start, end) : str
 }
 
 export async function mkAllDir(userEmail: string, pathArr: string[]): Promise<number | null> {
@@ -70,22 +70,14 @@ export async function checkUserSpaceUsage(userEmail: string, newSnippetLength: n
     if (!user)
         throw new NotFoundError(`${userEmail} not found`)
 
-    let snippetUsage = 0
-    let folderUsage = 0
-
-    async function recursiveGetStorageUsage(f: folder) {
-        folderUsage++
-        const completeFolder = await prisma.folder.findUnique(
-            { where: { id: f.id }, select: { children: true, snippets: true } }
-        )
-        completeFolder!.snippets.forEach((s) => snippetUsage += s.content.length)
-        for (const ch of completeFolder!.children) {
-            recursiveGetStorageUsage(ch)
-        }
-    }
-
-    for (const f of user.folders)
-        await recursiveGetStorageUsage(f)
+    const allFolders = await prisma.folder.findMany({
+        where: { ownerEmail: userEmail },
+        select: { snippets: { select: { content: true } } }
+    })
+    const folderUsage = allFolders.length
+    const snippetUsage = allFolders.reduce(
+        (acc, cur) => acc += cur.snippets.reduce((a, c) => a += c.content.length, 0), 0
+    )
 
     return !(snippetUsage + newSnippetLength > g.MAXIMUM_SNIPPET_USAGE || folderUsage > g.MAXIMUM_FOLDER_NUM)
 }

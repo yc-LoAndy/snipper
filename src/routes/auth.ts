@@ -87,7 +87,7 @@ router.post(
     }),
     async (req, res, next) => {
         try {
-            const userData = await getGoogleUserData(req.body.accessToken as string);
+            const userData = await getGoogleUserData(req.body.accessToken as string)
             const existingAccount = await prisma.user.findUnique({ where: { email: userData.email } })
             if (!existingAccount) {
                 await prisma.user.create({

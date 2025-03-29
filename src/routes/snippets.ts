@@ -38,7 +38,7 @@ router.post(
                 return next(new BadRequestError("User storage limit exceeded"))
 
             const pathArray = trimAny(convertPath(filePath, "posix"), [".", "/"]).split("/")
-            let parentFolderId: number | null = null;
+            let parentFolderId: number | null = null
             if (pathArray.length <= 1) {
                 const account = await prisma.user.findUnique({ where: { email: req.userEmail }, select: { folders: true } })
                 if (account!.folders.length !== 0)
@@ -169,7 +169,7 @@ router.delete(
     }),
     async (req, res, next) => {
         try {
-            const snippetId: number = Number(req.params['snippetId'])
+            const snippetId: number = Number(req.params["snippetId"])
             const existingSnippet = await prisma.snippet.findUnique({
                 where: { id: snippetId }
             })
@@ -205,7 +205,7 @@ router.put(
             if (newFolderPath.length > g.MAXIMUM_PATH_LENGTH)
                 return next(new BadRequestError("Path length limit exceeded"))
 
-            const folderId: number = Number(req.params['folderId'])
+            const folderId: number = Number(req.params["folderId"])
             const folder = await prisma.folder.findUnique({
                 where: { id: folderId }
             })
@@ -272,7 +272,7 @@ router.delete(
     }),
     async (req, res, next) => {
         try {
-            const folderId: number = Number(req.params['folderId'])
+            const folderId: number = Number(req.params["folderId"])
             const existingFolder = await prisma.folder.findUnique({
                 where: { id: folderId }, include: { snippets: true, children: true }
             })

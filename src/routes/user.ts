@@ -60,7 +60,7 @@ router.get(
                     }
                 },
                 orderBy: { name: "asc" }
-            });
+            })
 
             res.status(200).validateAndSend({
                 userName: req.userName,

@@ -8,7 +8,7 @@
         // Use correct ESM import behavior
         "strict": true,
         "esModuleInterop": true,
-        // "moduleResolution": "node16",
+        "exactOptionalPropertyTypes": true,
         "paths": {
             "@/*": [
                 "./src/*"
