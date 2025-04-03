@@ -26,6 +26,6 @@ app.use("/api", router)
 app.use(middleware.error)
 
 
-app.listen(env.get("PORT"), () => {
+app.listen(Number(env.get("PORT")), "::", () => {
     Logger.info(`Listening to port ${env.get("PORT")} in ${env.get("ENV")} environment`)
 })
